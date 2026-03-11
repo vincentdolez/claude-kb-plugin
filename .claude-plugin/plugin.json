@@ -1,0 +1,41 @@
+{
+  "name": "claude-kb",
+  "version": "0.1.0",
+  "description": "Gestion de Knowledge Base professionnelle avec Claude Code + Obsidian. Hooks, agents, skills, commandes pour maintenir une KB structurée.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/hook-tag-validate.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/hook-auto-updated.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/hook-index-sync.sh\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/hook-structural-propagation.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
