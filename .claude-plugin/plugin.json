@@ -3,13 +3,23 @@
   "version": "0.1.0",
   "description": "Gestion de Knowledge Base professionnelle avec Claude Code + Obsidian. Hooks, agents, skills, commandes pour maintenir une KB structurée.",
   "hooks": {
-    "PreToolUse": [
+"PreToolUse": [
       {
         "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/hook-tag-validate.sh\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/hook-journal-reminder.sh\"",
             "timeout": 5
           }
         ]

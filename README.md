@@ -7,7 +7,7 @@ Plugin Claude Code pour gérer une Knowledge Base professionnelle avec Obsidian.
 - **Hooks** : mise à jour automatique des dates, synchronisation des index, validation des tags, propagation structurelle
 - **Agents** : 20 agents spécialisés (domaine, pipeline article, audit sémantique, review, gouvernance tags)
 - **Skills** : navigation structurelle (graphe de dépendances, backlinks, orphelins), audit KB distribué (5 dimensions)
-- **Commandes** : `/planning`, `/article`, `/kb-audit`
+- **Commandes** : `/planning`, `/article`, `/kb-audit`, `/journal`
 
 ## Installation
 
