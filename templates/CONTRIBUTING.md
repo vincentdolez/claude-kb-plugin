@@ -31,12 +31,14 @@ MDX (incompatible Obsidian), JSON+Markdown (overkill), Notion/Coda (pas Git), Ma
 ---
 title: "Titre lisible du document"
 type: fondation | strategie | marque | spec | ops | decision | prompt | chantier | template | journal | index | person
-status: backlog | draft | actif | en-pause | terminé | abandonné | archivé
+status: backlog | exploration | draft | actif | en-pause | terminé | superseded | abandonné | archivé
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
 owner: vincent | claude | shared
 tags: [tag1, tag2]
 depends_on: [chemin/relatif/fichier]
+replaces: [chemin/relatif/fichier]
+replaced_by: [chemin/relatif/fichier]
 consumed_by: [claude-ai, claude-code, human]
 ---
 ```
@@ -50,7 +52,11 @@ consumed_by: [claude-ai, claude-code, human]
 - `owner` : qui maintient ce document
 - `tags` : pour la recherche et le filtrage
 - `depends_on` : documents prérequis (liens de contexte pour l'IA)
+- `replaces` : documents que ce fichier remplace totalement (le remplacé doit passer en `status: superseded` avec `replaced_by` symétrique pointant ici)
+- `replaced_by` : documents qui remplacent celui-ci (utilisé conjointement avec `status: superseded`)
 - `consumed_by` : qui lit ce document (aide à calibrer le niveau de détail et au routage agent)
+
+**Sémantique `replaces` / `replaced_by`** : usage **strict** pour remplacement total uniquement. Pour les supersedes partiels ou sémantiques (un §, un aspect, une cible), rester en prose dans une section narrative dédiée — ne pas surcharger les champs frontmatter.
 
 ### Champs chantier (type: chantier)
 
@@ -104,29 +110,47 @@ consumed_by: [claude-ai, claude-code, human]
 ## Cycle de vie d'un document
 
 ```
-backlog  →  draft  →  actif  →  terminé  →  archivé
-                       ↑          |
-                       └──────────┘  (retour en draft si refonte majeure)
+backlog  ─┐
+          ├→  exploration  ─┐
+          └→  draft  ───────┤→  actif  →  terminé  →  archivé
+                            │              │
+                            │              └→  superseded  (remplacé par un autre doc spécifique)
+                            └→  en-pause / abandonné  (états transverses)
 ```
 
 | Statut | Signification | Qui peut modifier |
 |---|---|---|
 | `backlog` | Identifié, pas encore démarré | Tout le monde |
-| `draft` | En cours, contenu incomplet ou non validé | Tout le monde |
-| `actif` | Source de vérité validée / chantier en cours | Avec review |
+| `exploration` | Délibération ouverte, brainstorm, hypothèses en cours — peut vivre des mois sans pression de livrable | Tout le monde |
+| `draft` | Livrable en cours de rédaction, contenu incomplet — pression de finir | Tout le monde |
+| `actif` | Source de vérité validée / chantier en cours / décision en vigueur | Avec review |
 | `en-pause` | Suspendu volontairement, reprise prévue | Avec review |
 | `terminé` | Livré / objectif atteint (chantiers, specs ponctuelles) | Avec review |
+| `superseded` | Remplacé par un autre document spécifique (champ `replaced_by` obligatoire) | Ne pas modifier le contenu |
 | `abandonné` | Annulé, non pertinent — conservé pour historique | Ne pas modifier |
 | `archivé` | Obsolète, conservé pour historique | Ne pas modifier |
 
+### Distinction `exploration` vs `draft`
+
+- **`exploration`** : tu cherches, tu réfléchis à voix haute, tu compares des options, tu n'es pas pressé d'aboutir. Un brainstorm, une délibération pour/contre, une hypothèse de positionnement, une exploration de marché. Vit aussi longtemps que nécessaire.
+- **`draft`** : tu sais ce que tu veux livrer, le contenu est en cours de rédaction. Un article, une spec, une ADR en cours de formulation. Existe pour devenir `actif` (ou `terminé` pour un livrable ponctuel).
+
+### Distinction `superseded` vs `archivé`
+
+- **`superseded`** : le doc est remplacé par un successeur **identifié et nommé** (`replaced_by`). Le lien de filiation est explicite.
+- **`archivé`** : le doc est obsolète sans successeur précis, conservé pour historique.
+
 ### Règles de transition
 
-1. Créer un document futur en `status: backlog` (ou `draft` si le travail commence immédiatement)
-2. Passer en `draft` quand le travail démarre
-3. Passer en `actif` quand le contenu est fiable et sert de source de vérité
-4. Passer en `terminé` quand l'objectif est atteint (pertinent pour chantiers, sprints)
-5. Mettre à jour `updated` à chaque modification significative
-6. Archiver quand le document est remplacé ou obsolète
+1. Créer un document futur en `status: backlog` (ou `draft` / `exploration` si le travail commence immédiatement)
+2. Démarrer en `exploration` si la délibération est ouverte sans pression de livrable
+3. Démarrer en `draft` si le livrable est identifié et la rédaction commence
+4. Une `exploration` peut accoucher d'un `draft` (ou plusieurs) puis d'un `actif`
+5. Passer en `actif` quand le contenu est fiable et sert de source de vérité
+6. Passer en `terminé` quand l'objectif est atteint (pertinent pour chantiers, sprints)
+7. Passer en `superseded` quand un autre document spécifique remplace celui-ci totalement : renseigner `replaced_by` côté ancien, `replaces` côté nouveau (symétrie obligatoire)
+8. Mettre à jour `updated` à chaque modification significative
+9. Archiver (`archivé`) quand le document est obsolète sans successeur identifié
 
 ---
 
