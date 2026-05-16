@@ -25,10 +25,14 @@ if ! echo "$new_string" | grep -q '^tags:'; then
   exit 0
 fi
 
-# Extract tags from the new_string
+# Extract tags from the new_string — supports inline "tags: [a, b, c]" format
 tags_line=$(echo "$new_string" | grep '^tags:' | head -1)
-# Parse [tag1, tag2, tag3] format
-tags=$(echo "$tags_line" | sed 's/tags:\s*\[//;s/\]//;s/,/ /g' | tr -d '"' | tr -d "'")
+# Strip "tags:" prefix, then surrounding brackets, then quotes
+tags_raw=$(echo "$tags_line" | sed -E 's/^tags:[[:space:]]*//; s/^\[//; s/\][[:space:]]*$//' | tr -d '"' | tr -d "'")
+# Skip empty tags list (tags: [] or tags:)
+if [ -z "$tags_raw" ]; then
+  exit 0
+fi
 
 # Load valid tags from registry
 KB_ROOT=$(echo "$file_path" | sed 's|/[0-9][0-9]-.*||')
@@ -38,17 +42,30 @@ if [ ! -f "$REGISTRY" ]; then
   exit 0
 fi
 
-# Extract all tags from registry (lines starting with - ` in a list)
-valid_tags=$(grep -oE '`[a-z0-9-]+`' "$REGISTRY" | tr -d '`' | sort -u)
+# Extract all valid tags from registry "## Catégories" section only
+# (excludes "## Tags retirés" deprecated tags).
+# Uses [^`]+ to capture any chars between backticks — accepts accents naturally.
+valid_tags=$(awk '
+  /^## Catégories/ {capture=1; next}
+  /^## Tags retirés/ {capture=0}
+  capture {
+    while (match($0, /`[^`]+`/)) {
+      print substr($0, RSTART+1, RLENGTH-2)
+      $0 = substr($0, RSTART+RLENGTH)
+    }
+  }
+' "$REGISTRY" | sort -u)
 
-# Check each tag
+# Check each tag (split by comma, trim spaces, fixed-string exact match)
 unknown=""
-for tag in $tags; do
-  tag=$(echo "$tag" | tr -d ' ')
+IFS=',' read -ra tag_array <<< "$tags_raw"
+for tag in "${tag_array[@]}"; do
+  # Trim leading/trailing whitespace
+  tag=$(echo "$tag" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')
   if [ -z "$tag" ]; then
     continue
   fi
-  if ! echo "$valid_tags" | grep -qx "$tag"; then
+  if ! echo "$valid_tags" | grep -Fxq "$tag"; then
     unknown="$unknown $tag"
   fi
 done
