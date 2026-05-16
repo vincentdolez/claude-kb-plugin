@@ -100,6 +100,32 @@ consumed_by: [claude-ai, claude-code, human]
 - **Index** : chaque dossier contient un `_index.md` (ou `README.md` pour les entités)
 - **Templates** : dans `_templates/`, avec des placeholders `{{variable}}`
 
+### Pattern `_index.md` markérisable
+
+Quand un dossier contient plusieurs fichiers .md frères qui partagent un même type / statut, son `_index.md` peut intégrer une table auto-régénérée. Placer les markers entre une intro narrative et tout contenu manuel structurant :
+
+```markdown
+# Titre du domaine
+
+Intro narrative manuelle (objet du dossier, principes).
+
+## Documents (ou ADRs / Personas / etc.)
+
+<!-- AUTO:BEGIN -->
+<!-- AUTO:END -->
+
+> Table régénérée automatiquement depuis les frontmatter.
+
+[Contenu manuel ultérieur : sous-domaines, filiation, schémas, modes d'emploi]
+```
+
+Le hook `hook-index-sync.sh` regénère la zone entre markers à chaque Edit/Write d'un fichier frère. Le générateur :
+- Liste uniquement les fichiers .md du **niveau immédiat** (pas récursif)
+- Groupe par `status` (ordre : actif → en-pause → draft → exploration → backlog → terminé → superseded → abandonné → archivé)
+- Cas spéciaux : type `chantier` (table riche avec prio/cible/progress) et type `person` (table pipeline)
+
+**Quand NE PAS markeriser** : `_index.md` qui sont des cartes sémantiques manuelles (vue stratégique, tableau structuré spécifique au domaine, dossier sans fichiers frères directs). La régénération auto remplacerait du contenu à valeur supérieure. Exemples : `_index.md` racine, `08-recherche/_index.md`, `04-contenu/seeds/_index.md`.
+
 ## Liens
 
 - **Internes** : wiki-links Obsidian `[[chemin/fichier]]`
