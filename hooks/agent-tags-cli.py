@@ -46,11 +46,20 @@ def load_registry(registry_path: str) -> tuple[set[str], dict[str, str]]:
                 valid_tags.add(m.group(1))
 
         if in_retired:
-            # Format: | `ancien` | Raison | `alternative` | ou | `ancien` | Raison | — |
-            m = re.match(r"\|\s*`([^`]+)`\s*\|[^|]*\|\s*(?:`([^`]+)`|—)\s*\|", line)
-            if m:
-                old_tag = m.group(1)
-                alt = m.group(2) or ""
+            # Capturer le premier tag de la 1ère colonne (exclure les multi-tags avec virgule)
+            # Format: | `ancien` | Raison | `alternative` | ou | ... | — | ou | ... | texte |
+            m_tag = re.match(r"\|\s*`([^`\[{,]+)`", line)
+            if m_tag:
+                old_tag = m_tag.group(1).strip()
+                # Analyser la 3ème colonne pour l'alternative
+                parts = re.split(r"\s*\|\s*", line.strip("|").strip())
+                alt = ""
+                if len(parts) >= 3:
+                    third_col = parts[2].strip()
+                    alt_match = re.search(r"`([^`]+)`", third_col)
+                    if alt_match:
+                        alt = alt_match.group(1)
+                    # Tiret ou texte libre sans backtick → KILL (alt = "")
                 retired_map[old_tag] = alt
 
     return valid_tags, retired_map
