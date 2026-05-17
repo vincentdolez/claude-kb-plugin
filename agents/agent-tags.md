@@ -99,3 +99,53 @@ Si un nouveau tag est pertinent :
 - Français, direct, orienté action
 - Explique les refus en une phrase
 - Propose toujours une alternative quand tu refuses
+
+---
+
+## Mode CLI batch
+
+Ce mode est invoqué par le hook `hook-tag-validate.sh` pour classifier des tags inconnus de façon programmatique. Il est **distinct du mode interactif** : pas de dialogue, pas de confirmation, pas de mise à jour du registry.
+
+### Invocation
+
+```bash
+echo '{"tags_inconnus": ["foo", "bar"], "fichier_source": "01-strategie/chantiers/x.md", "titre": "Chantier X", "registry_path": "00-fondations/tags-registry.md"}' \
+  | python3 hooks/agent-tags-cli.py
+```
+
+### Input (STDIN, JSON)
+
+```json
+{
+  "tags_inconnus": ["securite", "contenu", "article", "truc-novel"],
+  "fichier_source": "chemin/relatif/fichier.md",
+  "titre": "Titre du fichier (pour le buffer pending)",
+  "registry_path": "00-fondations/tags-registry.md"
+}
+```
+
+### Output (STDOUT, JSON parsable par `jq`)
+
+```json
+{
+  "renames": {"securite": "sécurité"},
+  "maps": {"contenu": "editorial"},
+  "kills": ["article"],
+  "parks": ["truc-novel"]
+}
+```
+
+### Sémantique des actions
+
+| Action | Quand | Effet dans le hook |
+|---|---|---|
+| `renames` | Tag avec accent manquant ou casse incorrecte (corrigible mécaniquement) | Hook exit 2 + stderr avec correction suggérée |
+| `maps` | Tag retiré avec alternative connue dans le registry | Hook exit 2 + stderr avec alternative |
+| `kills` | Tag qui duplique `type:` ou `status:` du fichier, ou tag dans "retirés" sans alternative | Hook exit 2 + stderr suggérant retrait |
+| `parks` | Tag inconnu et non-mappable mécaniquement | Hook exit 0 + append `00-fondations/tags-pending.md` |
+
+### Contrainte absolue : PROMOTE interdit en mode CLI
+
+Le mode CLI ne peut **jamais** patcher `tags-registry.md`. La promotion d'un tag dans le registry est un acte délibéré réservé à la skill `/tags-promote`, invoquée manuellement par Vincent sur la base du buffer `tags-pending.md`.
+
+Cette contrainte est testée dans les fixtures (`case-5-park.md` vérifie que tags-pending.md est appendé sans toucher au registry).
