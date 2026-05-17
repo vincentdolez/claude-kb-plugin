@@ -14,7 +14,7 @@ import sys
 from collections import defaultdict
 
 PRIORITY_ORDER = {"P0": 0, "P1": 1, "P2": 2, "": 3}
-STATUS_ORDER = ["actif", "en-pause", "draft", "exploration", "backlog", "terminé", "superseded", "abandonné", "archivé"]
+STATUS_ORDER = ["actif", "en-pause", "draft", "exploration", "backlog", "terminé", "publié", "superseded", "abandonné", "archivé"]
 
 
 def parse_frontmatter(filepath: str) -> dict | None:
@@ -82,6 +82,7 @@ def generate_chantier_table(files: list[dict], directory: str) -> str:
             "exploration": "Exploration",
             "backlog": "Planifié",
             "terminé": "Terminé",
+            "publié": "Publié",
             "superseded": "Supersédé",
             "abandonné": "Abandonné",
             "archivé": "Archivé",

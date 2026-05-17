@@ -11,10 +11,39 @@ from kb_links import resolve_links, find_all_links, WIKILINK_RE
 from kb_graph import find_orphans, detect_cycles, build_graph
 
 REQUIRED_FIELDS = {'title', 'type', 'status', 'created', 'updated'}
-VALID_STATUSES = {'draft', 'actif', 'archivé'}
-# Tolerate these non-standard but used statuses (report as info, not critique)
-KNOWN_STATUSES = VALID_STATUSES | {'terminé', 'backlog', 'completed'}
+# Statuts officiels du CONTRIBUTING.md (cycle de vie KB)
+VALID_STATUSES = {
+    'backlog', 'exploration', 'draft', 'actif', 'en-pause',
+    'terminé', 'publié', 'superseded', 'abandonné', 'archivé',
+}
+# Tolérés en plus (legacy ou anglais)
+KNOWN_STATUSES = VALID_STATUSES | {'completed'}
 EXCLUDE_NAMES = {'_index.md', 'CLAUDE.md', 'CONTRIBUTING.md', 'README.md'}
+# Dossiers exemptés du check frontmatter (templates avec placeholders,
+# documents simulacres du meta-framework).
+EXCLUDE_DIR_PATTERNS = (
+    '_templates/',
+    '/templates/',
+    '/phase1/documents/fake/',
+    '/phase1/documents/',
+)
+# Préfixes de fichier exemptés (simulacres meta-framework cases).
+EXCLUDE_FILE_PREFIXES = (
+    'mail-', 'relances-', 'extrait-', 'excel-', 'fiche-',
+    'facture-', 'arborescence-', 'carnet-',
+)
+
+
+def _is_excluded_for_frontmatter(rel_path: str, file_name: str) -> bool:
+    """Return True if a file is exempt from the frontmatter check."""
+    rel_norm = '/' + rel_path.replace('\\', '/')
+    for pat in EXCLUDE_DIR_PATTERNS:
+        if pat in rel_norm:
+            return True
+    for prefix in EXCLUDE_FILE_PREFIXES:
+        if file_name.startswith(prefix):
+            return True
+    return False
 
 
 def _severity(level: str, msg: str, path: str = None) -> dict:
@@ -54,6 +83,8 @@ def audit_frontmatter(kb_root: Path) -> list:
         rel = str(fp.relative_to(kb_root))
         if fp.name in EXCLUDE_NAMES or fp.name.startswith('_template'):
             continue
+        if _is_excluded_for_frontmatter(rel, fp.name):
+            continue
         meta = get_meta(fp)
         if not meta:
             findings.append(_severity('warning', 'Pas de frontmatter YAML', rel))
@@ -73,9 +104,10 @@ def audit_frontmatter(kb_root: Path) -> list:
                 rel
             ))
         elif status and status not in VALID_STATUSES:
+            # Statut connu mais hors registry officiel (ex: 'completed' anglais)
             findings.append(_severity(
                 'info',
-                f"Statut non-standard mais toléré : '{status}'",
+                f"Statut non-officiel mais toléré : '{status}'",
                 rel
             ))
     return findings
