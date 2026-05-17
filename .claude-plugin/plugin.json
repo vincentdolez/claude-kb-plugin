@@ -9,6 +9,11 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/hook-quality-check.sh\"",
+            "timeout": 15
+          },
+          {
+            "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/hook-tag-validate.sh\"",
             "timeout": 5
           }
