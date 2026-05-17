@@ -42,7 +42,7 @@ title: "{titre dérivé de la thèse}"
 type: contenu
 status: draft
 created: {date du jour}
-updated: {date du jour}
+updated: 2026-05-18
 owner: vincent
 tags: [article, brief]
 pilier: {pilier choisi}
@@ -80,7 +80,7 @@ title: "Contexte éditorial — {slug}"
 type: contenu
 status: draft
 created: {date du jour}
-updated: {date du jour}
+updated: 2026-05-18
 owner: claude
 tags: [article, contexte]
 depends_on: [brief.md]
@@ -103,3 +103,12 @@ Contenu du contexte :
 3. **Rester concis** — le contexte doit être une synthèse actionnable, pas un dump
 4. **Signaler les gaps** — si un angle du brief n'a pas de source KB, le dire
 5. **Si bloqué** → demander à Vincent via AskUserQuestion
+
+## Contrat frontmatter
+
+Tout fichier `.md` produit par cet agent doit respecter le contrat frontmatter KB.
+Référence complète : `claude-kb-plugin/agents/_shared/frontmatter-contract.md`
+
+Types produits par cet agent : `contenu` (brief.md, contexte.md)
+Champs requis : `title`, `type: contenu`, `status`, `created`, `updated`
+Champs recommandés : `owner`, `audience`, `pilier`, `tags`, `depends_on`, `consumed_by`

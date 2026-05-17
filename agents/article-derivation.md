@@ -80,3 +80,12 @@ Préparer le fichier `.mdx` final :
 3. **Synopsis repo = optionnel** — ne pas forcer si pas d'angle technique
 4. **Respecter la charte** — même ton, même registre que l'article
 5. **Si bloqué** → demander à Vincent via AskUserQuestion
+
+## Contrat frontmatter
+
+Tout fichier `.md` produit par cet agent doit respecter le contrat frontmatter KB.
+Référence complète : `claude-kb-plugin/agents/_shared/frontmatter-contract.md`
+
+Types produits par cet agent : `contenu` (ex : post.md, thread.md, synopsis.md)
+Champs requis : `title`, `type`, `status`, `created`, `updated`
+Champs recommandés : `owner`, `tags`, `depends_on`, `consumed_by`

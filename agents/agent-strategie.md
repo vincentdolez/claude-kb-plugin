@@ -41,3 +41,12 @@ Si la demande touche la marque, le contenu, la technique ou les ops :
 - Signale que c'est hors périmètre
 - Indique quel agent devrait traiter
 - Ne traite pas toi-même
+
+## Contrat frontmatter
+
+Tout fichier `.md` produit par cet agent doit respecter le contrat frontmatter KB.
+Référence complète : `claude-kb-plugin/agents/_shared/frontmatter-contract.md`
+
+Types produits par cet agent : `strategie` (ex : chantiers, decisions, 01-strategie/)
+Champs requis : `title`, `type`, `status`, `created`, `updated`
+Champs recommandés : `owner`, `tags`, `depends_on`, `consumed_by`

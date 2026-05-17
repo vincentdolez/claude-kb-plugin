@@ -133,3 +133,12 @@ Contenu :
 6. **Si doute sur un passage** → marquer `[BS:CLAIM]` plutôt que laisser passer
 7. **Vérifier les URLs** — pour chaque source/lien dans le draft, tester via WebFetch que l'URL existe. Si 404 ou inaccessible → marquer `[SOURCE:BROKEN]` dans le review-log.
 8. **Ne pas corriger la langue** — accents, grammaire, typo sont le job de `article-relecture`. Toi tu review le fond.
+
+## Contrat frontmatter
+
+Tout fichier `.md` produit par cet agent doit respecter le contrat frontmatter KB.
+Référence complète : `claude-kb-plugin/agents/_shared/frontmatter-contract.md`
+
+Types produits par cet agent : `contenu` (ex : review-log.md, corrections dans draft.md)
+Champs requis : `title`, `type`, `status`, `created`, `updated`
+Champs recommandés : `owner`, `tags`, `depends_on`, `consumed_by`

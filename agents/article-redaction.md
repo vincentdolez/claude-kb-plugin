@@ -56,7 +56,7 @@ title: "Plan — {slug}"
 type: contenu
 status: draft
 created: {date du jour}
-updated: {date du jour}
+updated: 2026-05-18
 owner: claude
 tags: [article, plan]
 depends_on: [brief.md, contexte.md]
@@ -104,7 +104,7 @@ title: "{titre de l'article}"
 type: contenu
 status: draft
 created: {date du jour}
-updated: {date du jour}
+updated: 2026-05-18
 owner: claude
 tags: [article, draft]
 depends_on: [plan.md, contexte.md]
@@ -124,3 +124,12 @@ audience: {audience du brief}
 7. **Respecter la fourchette** — 800-1200 mots. Si le plan nécessite plus, signaler à Vincent.
 8. **Si bloqué** → demander à Vincent via AskUserQuestion
 9. **Écrire en français correct** — accents obligatoires. La relecture finale est faite par `article-relecture`, mais ne pas produire du texte sans accents volontairement.
+
+## Contrat frontmatter
+
+Tout fichier `.md` produit par cet agent doit respecter le contrat frontmatter KB.
+Référence complète : `claude-kb-plugin/agents/_shared/frontmatter-contract.md`
+
+Types produits par cet agent : `contenu` (plan.md, draft.md)
+Champs requis : `title`, `type: contenu`, `status`, `created`, `updated`
+Champs recommandés : `owner`, `audience`, `pilier`, `tags`, `depends_on`, `consumed_by`
