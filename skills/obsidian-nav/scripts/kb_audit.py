@@ -7,7 +7,7 @@ from datetime import datetime
 from collections import defaultdict
 
 from kb_meta import find_kb_root, iter_md_files, get_meta, all_files_meta, stale_drafts
-from kb_links import resolve_links, find_all_links, WIKILINK_RE
+from kb_links import resolve_links, find_all_links, WIKILINK_RE, _extract_target
 from kb_graph import find_orphans, detect_cycles, build_graph
 
 REQUIRED_FIELDS = {'title', 'type', 'status', 'created', 'updated'}
@@ -180,7 +180,7 @@ def audit_index_sync(kb_root: Path) -> list:
         # Find all wiki-links in the index
         referenced = set()
         for match in WIKILINK_RE.finditer(text):
-            raw = match.group(1).strip()
+            raw = _extract_target(match.group(1))
             referenced.add(raw)
 
         # Find actual .md files in the same directory (non-recursive, exclude _index.md)

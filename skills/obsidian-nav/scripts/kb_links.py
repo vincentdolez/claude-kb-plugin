@@ -8,7 +8,27 @@ from pathlib import Path
 
 from kb_meta import find_kb_root, iter_md_files, get_meta
 
-WIKILINK_RE = re.compile(r'\[\[([^\]|]+)(?:\|[^\]]+)?\]\]')
+WIKILINK_RE = re.compile(r'\[\[([^\]]+)\]\]')
+
+
+def _extract_target(raw_content: str) -> str:
+    """Extract the link target from raw wiki-link content.
+
+    Handles:
+    - [[X]]            → 'X'
+    - [[X|alias]]      → 'X'  (normal pipe alias)
+    - [[X\\|alias]]    → 'X'  (escaped pipe, Obsidian table syntax)
+    - [[X#section]]    → 'X#section'  (anchor stripped later by _resolve_wikilink)
+    - [[X#s|alias]]    → 'X#s'
+    - [[X#s\\|alias]]  → 'X#s'
+    """
+    # Escaped pipe \| takes priority (Obsidian table syntax where | is escaped)
+    if '\\|' in raw_content:
+        return raw_content.split('\\|', 1)[0].strip()
+    # Normal pipe alias
+    if '|' in raw_content:
+        return raw_content.split('|', 1)[0].strip()
+    return raw_content.strip()
 
 
 def _resolve_wikilink(link: str, kb_root: Path) -> str | None:
@@ -75,7 +95,7 @@ def resolve_links(filepath, kb_root: Path = None) -> dict:
 
     # Wiki-links
     for match in WIKILINK_RE.finditer(text):
-        raw = match.group(1).strip()
+        raw = _extract_target(match.group(1))
         resolved = _resolve_wikilink(raw, kb_root)
         result['wikilinks'].append({'raw': raw, 'resolved': resolved})
 
@@ -128,7 +148,7 @@ def find_backlinks(kb_root: Path, target: str) -> list:
 
         # Check wiki-links
         for match in WIKILINK_RE.finditer(text):
-            raw = match.group(1).strip()
+            raw = _extract_target(match.group(1))
             resolved = _resolve_wikilink(raw, kb_root)
             if resolved == target_str:
                 backlinks.append({'source': rel, 'type': 'wikilink', 'raw': raw})
