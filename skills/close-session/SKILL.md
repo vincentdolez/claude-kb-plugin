@@ -30,11 +30,12 @@ Exécuter dans l'ordre :
 - Si non, ajouter une ligne TSV : `date | contexte | décisions | next | seeds`
 - Si oui, vérifier que l'entrée est complète (especially `next` et `seeds`)
 
-### 4. Memory
+### 4. Memory — synchroniser avec le journal
 
-- Vérifier si des informations de session méritent une memory (feedback, projet, user)
+- **Sync obligatoire** : pour chaque memory de type `project` liée au chantier actif, vérifier que son contenu reflète les décisions du journal (`decisions` de la dernière entrée TSV). Si la memory est en retard → la mettre à jour.
+- Vérifier si des informations de session méritent une nouvelle memory (feedback, projet, user)
 - Nettoyer les memories obsolètes si repérées
-- Rappel : la memory est un pont court terme, pas un doublon de la KB
+- Rappel : la memory est un pont court terme, pas un doublon de la KB. Mais si elle existe, elle doit être exacte — une memory périmée est pire qu'une memory absente.
 
 ### 5. Commit
 
