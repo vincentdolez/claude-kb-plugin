@@ -12,15 +12,36 @@ WIKILINK_RE = re.compile(r'\[\[([^\]|]+)(?:\|[^\]]+)?\]\]')
 
 
 def _resolve_wikilink(link: str, kb_root: Path) -> str | None:
-    """Resolve a wiki-link to a relative path, or None if not found."""
+    """Resolve a wiki-link to a relative path, or None if not found.
+
+    Strips anchor fragments (#section) before resolving — Obsidian anchors
+    point to a heading within the file, not a separate file.
+    """
+    # Strip anchor fragment: [[X#section]] → resolve X only
+    if '#' in link:
+        link = link.split('#', 1)[0].strip()
+    if not link:
+        return None
+
+    def _safe_rel(c: Path) -> str | None:
+        try:
+            resolved = c.resolve()
+            kb_resolved = kb_root.resolve()
+            return str(resolved.relative_to(kb_resolved))
+        except ValueError:
+            return None
     # Try exact match first
     candidate = kb_root / link
     if candidate.exists():
-        return str(candidate.relative_to(kb_root))
+        rel = _safe_rel(candidate)
+        if rel is not None:
+            return rel
     # Try with .md extension
     candidate = kb_root / (link + '.md')
     if candidate.exists():
-        return str(candidate.relative_to(kb_root))
+        rel = _safe_rel(candidate)
+        if rel is not None:
+            return rel
     # Try filename match across KB
     target_name = Path(link).name
     if not target_name.endswith('.md'):
