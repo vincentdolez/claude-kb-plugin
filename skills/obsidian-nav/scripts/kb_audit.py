@@ -7,7 +7,7 @@ from datetime import datetime
 from collections import defaultdict
 
 from kb_meta import find_kb_root, iter_md_files, get_meta, all_files_meta, stale_drafts
-from kb_links import resolve_links, find_all_links, WIKILINK_RE, _extract_target
+from kb_links import resolve_links, find_all_links, WIKILINK_RE, _extract_target, _strip_code_fences
 from kb_graph import find_orphans, detect_cycles, build_graph
 
 REQUIRED_FIELDS = {'title', 'type', 'status', 'created', 'updated'}
@@ -176,10 +176,11 @@ def audit_index_sync(kb_root: Path) -> list:
         rel = str(fp.relative_to(kb_root))
         parent_dir = fp.parent
         text = fp.read_text(encoding='utf-8')
+        text_no_fences = _strip_code_fences(text)
 
-        # Find all wiki-links in the index
+        # Find all wiki-links in the index (code-fence content excluded)
         referenced = set()
-        for match in WIKILINK_RE.finditer(text):
+        for match in WIKILINK_RE.finditer(text_no_fences):
             raw = _extract_target(match.group(1))
             referenced.add(raw)
 

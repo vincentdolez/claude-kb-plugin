@@ -9,6 +9,37 @@ from pathlib import Path
 from kb_meta import find_kb_root, iter_md_files, get_meta
 
 WIKILINK_RE = re.compile(r'\[\[([^\]]+)\]\]')
+_CODE_FENCE_RE = re.compile(r'^(`{3,}|~{3,})', re.MULTILINE)
+
+
+def _strip_code_fences(text: str) -> str:
+    """Replace content inside triple-backtick and tilde code fences with blank lines.
+
+    Preserves line count so that line-number references remain valid.
+    Single-backtick inline code is intentionally kept — an [[X]] inside
+    inline code is still considered an intentional link in Obsidian.
+    """
+    lines = text.split('\n')
+    result = []
+    in_fence = False
+    fence_char = None
+    for line in lines:
+        stripped = line.lstrip()
+        if not in_fence:
+            if stripped.startswith('```') or stripped.startswith('~~~'):
+                in_fence = True
+                fence_char = stripped[:3]
+                result.append('')  # blank out the fence opener line
+            else:
+                result.append(line)
+        else:
+            if stripped.startswith(fence_char):
+                in_fence = False
+                fence_char = None
+                result.append('')  # blank out the fence closer line
+            else:
+                result.append('')  # blank out content inside fence
+    return '\n'.join(result)
 
 
 def _extract_target(raw_content: str) -> str:
@@ -92,9 +123,10 @@ def resolve_links(filepath, kb_root: Path = None) -> dict:
         return result
 
     text = fp.read_text(encoding='utf-8')
+    text_no_fences = _strip_code_fences(text)
 
-    # Wiki-links
-    for match in WIKILINK_RE.finditer(text):
+    # Wiki-links (code-fence content blanked out to avoid false positives)
+    for match in WIKILINK_RE.finditer(text_no_fences):
         raw = _extract_target(match.group(1))
         resolved = _resolve_wikilink(raw, kb_root)
         result['wikilinks'].append({'raw': raw, 'resolved': resolved})
@@ -145,9 +177,10 @@ def find_backlinks(kb_root: Path, target: str) -> list:
         if rel == target_str:
             continue
         text = fp.read_text(encoding='utf-8')
+        text_no_fences = _strip_code_fences(text)
 
-        # Check wiki-links
-        for match in WIKILINK_RE.finditer(text):
+        # Check wiki-links (code-fence content excluded)
+        for match in WIKILINK_RE.finditer(text_no_fences):
             raw = _extract_target(match.group(1))
             resolved = _resolve_wikilink(raw, kb_root)
             if resolved == target_str:
