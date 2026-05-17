@@ -85,31 +85,17 @@ Rapporter les fichiers avec statut hors registre. Exemples connus : `status: sup
 
 #### 3c. Tags pirates
 
+Déléguer à `kb_query` (P6) — même registry, même couche de données que `hook-tag-validate.sh` :
+
 ```bash
-# Tags actifs du registry (cf. hook-tag-validate.sh)
-REGISTRY="KB/00-fondations/tags-registry.md"
-valid=$(awk '
-  /^## Catégories/ {capture=1; next}
-  /^## Tags retirés/ {capture=0}
-  capture {
-    while (match($0, /`[^`]+`/)) {
-      print substr($0, RSTART+1, RLENGTH-2)
-      $0 = substr($0, RSTART+RLENGTH)
-    }
-  }
-' "$REGISTRY" | sort -u)
-
-# Tags réellement utilisés en frontmatter
-used=$(grep -rh "^tags:" --include="*.md" KB/ | \
-       sed -E 's/^tags:[[:space:]]*\[//; s/\][[:space:]]*$//' | \
-       tr ',' '\n' | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//' | \
-       grep -v '^$' | sort -u)
-
-# Diff
-echo "$used" | grep -Fxv -f <(echo "$valid")  # = tags pirates
+SCRIPTS="${CLAUDE_PLUGIN_ROOT}/skills/obsidian-nav/scripts"
+python3 "$SCRIPTS/kb_query.py" --tags-missing-registry --format json
 ```
 
-Rapporter top 20 tags pirates par fréquence d'usage. Suggérer pour chacun : `intégrer au registry`, `remplacer par <tag existant>`, ou `kill`.
+Retourne un tableau JSON `[{path, title, status, unknown_tags: [...]}]`.
+Si exit 1 : aucun tag pirate → OK.
+
+Rapporter les fichiers concernés avec leurs tags inconnus. Suggérer pour chacun : `intégrer au registry`, `remplacer par <tag existant>`, ou `kill`. Prioriser les plus fréquents (compter les occurrences dans le JSON).
 
 #### 3d. Inbox stale
 
