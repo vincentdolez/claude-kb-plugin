@@ -44,6 +44,41 @@ python3 $SCRIPTS/kb_report.py --stale --days 60
 python3 $SCRIPTS/kb_report.py --audit
 ```
 
+## CLI — `kb_query.py` (DSL requêtes déclaratives)
+
+Complète `kb_report.py` par une couche requête déclarative. Read-only, même données que les Obsidian Bases (P3). Réutilisable depuis hooks, agents, audits batch.
+
+```bash
+SCRIPTS="${CLAUDE_PLUGIN_ROOT}/skills/obsidian-nav/scripts"
+
+# Chantiers actifs avec sélection de colonnes
+python3 $SCRIPTS/kb_query.py --where "status:actif,type:chantier" \
+  --select "title,priority,updated" --format md
+
+# Fichiers tagués meta-tooling, hors archivé
+python3 $SCRIPTS/kb_query.py --tags "meta-tooling" --exclude-status archivé --format list
+
+# Qui dépend de ce fichier ?
+python3 $SCRIPTS/kb_query.py --depends-on "08-recherche/congruence" --format graph
+
+# Orphelins (hors archives)
+python3 $SCRIPTS/kb_query.py --orphans --exclude "_archives/**" --format table
+
+# Tags hors registry (utilisé par /lint 3c)
+python3 $SCRIPTS/kb_query.py --tags-missing-registry --format json
+
+# Drafts stales depuis plus de 45 jours
+python3 $SCRIPTS/kb_query.py --where "updated<2026-04-01,status:draft" --format table
+```
+
+**Flags** : `--where EXPR`, `--tags TAGS`, `--depends-on PATH`, `--orphans`, `--tags-missing-registry`, `--exclude GLOB`, `--exclude-status STATUTS`, `--select CHAMPS`, `--format {table,md,json,list,graph}`, `--kb-root PATH`
+
+**Opérateurs `--where`** : `field:value` (égalité), `field<YYYY-MM-DD` (date antérieure), `field>YYYY-MM-DD` (date postérieure). Virgule = AND.
+
+**Format** : `table` si TTY, `json` si pipe (override possible avec `--format`).
+
+**Exit codes** : 0 = résultats, 1 = aucun match, 2 = erreur DSL.
+
 ## Modules (usage programmatique par agents)
 
 | Module | Rôle | Fonctions clés |
