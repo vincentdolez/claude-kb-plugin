@@ -31,6 +31,28 @@ if [[ "$file_path" != *.md ]]; then
   exit 0
 fi
 
+# ── Garde de périmètre : ne valider QUE les docs du repo de contenu KB ───────────
+# Le frontmatter KB (title/type/status/created/updated) ne s'applique qu'aux fichiers
+# de contenu de la KB. Tout le reste est exempté silencieusement :
+#   - skills/agents du plugin (frontmatter name/description légitime)
+#   - dossier memory (~/.claude/.../memory/, frontmatter name/description/metadata)
+#   - markdown brut d'autres repos (sans frontmatter)
+#   - fixtures de test du plugin
+#
+# Marqueur du repo de contenu : présence de 00-fondations/schemas/frontmatter/.
+# Les chemins du plugin sont exclus d'office (fixtures pouvant contenir 00-fondations/).
+case "$file_path" in
+  */claude-kb-plugin/*) exit 0 ;;
+esac
+
+KB_CONTENT_ROOT="$file_path"
+while [ "$KB_CONTENT_ROOT" != "/" ] && [ ! -d "$KB_CONTENT_ROOT/00-fondations/schemas/frontmatter" ]; do
+  KB_CONTENT_ROOT=$(dirname "$KB_CONTENT_ROOT")
+done
+if [ "$KB_CONTENT_ROOT" = "/" ]; then
+  exit 0  # Hors périmètre KB de contenu — autoriser silencieusement
+fi
+
 # Localiser le validator Python
 HOOKS_DIR="$(dirname "$0")"
 PLUGIN_ROOT="$(dirname "$HOOKS_DIR")"
@@ -48,16 +70,9 @@ if ! command -v python3 &>/dev/null; then
   exit 0  # Python3 non disponible — laisser passer
 fi
 
-# Localiser la KB root (remonte jusqu'à trouver 00-fondations/)
-KB_ROOT="$file_path"
-while [ "$KB_ROOT" != "/" ] && [ ! -d "$KB_ROOT/00-fondations" ]; do
-  KB_ROOT=$(dirname "$KB_ROOT")
-done
-
-SCHEMAS_DIR=""
-if [ -d "$KB_ROOT/00-fondations/schemas/frontmatter" ]; then
-  SCHEMAS_DIR="$KB_ROOT/00-fondations/schemas/frontmatter"
-fi
+# KB root déjà résolu par la garde de périmètre ci-dessus
+KB_ROOT="$KB_CONTENT_ROOT"
+SCHEMAS_DIR="$KB_ROOT/00-fondations/schemas/frontmatter"
 
 # Pour les fichiers en cours d'écriture, le fichier n'existe peut-être pas encore
 # sur disque (Write crée, Edit modifie). On valide le new_string directement si possible.
@@ -72,11 +87,8 @@ if [ "$tool_name" = "Write" ] && [ ! -f "$file_path" ]; then
     exit 0
   fi
 
-  # Vérification rapide : contient-il un frontmatter ?
-  if ! echo "$new_content" | head -1 | grep -q '^---'; then
-    exit 0
-  fi
-
+  # Dans le périmètre KB, un doc sans frontmatter est une violation au même titre
+  # que sur Edit — on valide systématiquement (pas de raccourci selon présence de ---).
   tmpfile=$(mktemp /tmp/kb-quality-check-XXXXXX.md)
   trap 'rm -f "$tmpfile"' EXIT
   echo "$new_content" > "$tmpfile"
