@@ -45,6 +45,15 @@ case "$file_path" in
   */claude-kb-plugin/*) exit 0 ;;
 esac
 
+# Fichiers structurels/bootstrap sans frontmatter KB — exemptés par basename.
+# CLAUDE.md (bootstrap agent à la racine du repo de contenu) n'a légitimement pas
+# de frontmatter title/type/status/…, sa validation produisait un faux positif
+# bloquant toute édition. Exemption restreinte à ce basename : CONTRIBUTING.md et
+# TASKS.md portent un frontmatter (non exemptés) et les README.md de contenu aussi.
+case "$(basename "$file_path")" in
+  CLAUDE.md) exit 0 ;;
+esac
+
 KB_CONTENT_ROOT="$file_path"
 while [ "$KB_CONTENT_ROOT" != "/" ] && [ ! -d "$KB_CONTENT_ROOT/00-fondations/schemas/frontmatter" ]; do
   KB_CONTENT_ROOT=$(dirname "$KB_CONTENT_ROOT")
